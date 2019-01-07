@@ -63,6 +63,11 @@ FACTURX_LEVEL2xmp = {
     'en16931': 'EN 16931',
     }
 
+import sys
+if sys.version_info[0] == 3:
+    unicode = str
+    from io import IOBase
+    file = IOBase
 
 def check_facturx_xsd(
         facturx_xml, flavor='autodetect', facturx_level='autodetect'):
@@ -217,7 +222,7 @@ def _prepare_pdf_metadata_txt(pdf_metadata):
         '/Author': pdf_metadata.get('author', ''),
         '/CreationDate': pdf_date,
         '/Creator':
-        u'factur-x Python lib v%s by Alexis de Lattre' % __version__,
+        'factur-x Python lib v%s by Alexis de Lattre' % __version__,
         '/Keywords': pdf_metadata.get('keywords', ''),
         '/ModDate': pdf_date,
         '/Subject': pdf_metadata.get('subject', ''),
@@ -319,9 +324,9 @@ def _prepare_pdf_metadata_xml(facturx_level, pdf_metadata):
     # TODO: should be UTF-16be ??
     xml_str = etree.tostring(
         root, pretty_print=True, encoding="UTF-8", xml_declaration=False)
-    head = u'<?xpacket begin="\ufeff" id="W5M0MpCehiHzreSzNTczkc9d"?>'.encode(
+    head = '<?xpacket begin="\ufeff" id="W5M0MpCehiHzreSzNTczkc9d"?>'.encode(
         'utf-8')
-    tail = u'<?xpacket end="w"?>'.encode('utf-8')
+    tail = '<?xpacket end="w"?>'.encode('utf-8')
     xml_final_str = head + xml_str + tail
     logger.debug('metadata XML:')
     logger.debug(xml_final_str)
@@ -329,7 +334,7 @@ def _prepare_pdf_metadata_xml(facturx_level, pdf_metadata):
 
 
 # def createByteObject(string):
-#    string_to_encode = u'\ufeff' + string
+#    string_to_encode = '\ufeff' + string
 #    x = string_to_encode.encode('utf-16be')
 #    return ByteStringObject(x)
 
@@ -380,6 +385,7 @@ def _facturx_update_metadata_add_attachment(
     '''This method is inspired from the code of the addAttachment()
     method of the PyPDF2 lib'''
     # The entry for the file
+    facturx_xml_str = facturx_xml_str.encode('utf-8')
     md5sum = hashlib.md5(facturx_xml_str).hexdigest()
     md5sum_obj = createStringObject(md5sum)
     params_dict = DictionaryObject({
@@ -500,9 +506,9 @@ def _extract_base_info(facturx_xml_etree):
 
 def _base_info2pdf_metadata(base_info):
     if base_info['doc_type'] == '381':
-        doc_type_name = u'Refund'
+        doc_type_name = 'Refund'
     else:
-        doc_type_name = u'Invoice'
+        doc_type_name = 'Invoice'
     date_str = datetime.strftime(base_info['date'], '%Y-%m-%d')
     title = '%s: %s %s' % (
         base_info['seller'], doc_type_name, base_info['number'])
@@ -510,7 +516,7 @@ def _base_info2pdf_metadata(base_info):
         doc_type_name, base_info['number'], date_str, base_info['seller'])
     pdf_metadata = {
         'author': base_info['seller'],
-        'keywords': u'%s, Factur-X' % doc_type_name,
+        'keywords': '%s, Factur-X' % doc_type_name,
         'title': title,
         'subject': subject,
         }
@@ -615,7 +621,7 @@ def generate_facturx_from_binary(
     :rtype: string
     """
 
-    if not isinstance(pdf_invoice, str):
+    if not isinstance(pdf_invoice, bytes):
         raise ValueError('pdf_invoice argument must be a string')
     facturx_pdf_invoice = False
     with NamedTemporaryFile(prefix='invoice-facturx-', suffix='.pdf') as f:
@@ -746,7 +752,7 @@ def generate_facturx_from_file(
         pdf_metadata = _base_info2pdf_metadata(base_info)
     else:
         # clean-up pdf_metadata dict
-        for key, value in pdf_metadata.iteritems():
+        for key, value in pdf_metadata.items():
             if not isinstance(value, (str, unicode)):
                 pdf_metadata[key] = ''
     facturx_level = facturx_level.lower()
